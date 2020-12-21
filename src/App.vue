@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-dark d-flex flex-column align-items-center justify-content-end justify-content-sm-start pt-2 pb-2" style="height: 100vh; width 100vh">
+  <div class="bg-dark d-flex flex-column align-items-center justify-content-end justify-content-sm-start pt-2 pb-5" style="height: 100%">
     <div v-if="!switches" class="spinner-border text-light p-2 align-self-center mb-auto">
       <span class="sr-only">Loading...</span>
     </div>
@@ -44,4 +44,8 @@ export default {
 
 <style>
 @import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
+#app, html, body {
+  height:100%;
+}
+
 </style>

@@ -37,7 +37,7 @@ app.get('/api', async (req, res) => {
   var list = []
   for (const [sn, d] of Object.entries(devices)) {
     console.log("getting state of", d.device.friendlyName)
-    await new Promise((resolve, reject) =>{
+    await new Promise((resolve) =>{
       d.getBinaryState((err, state) =>{
         list.push ({
           name: d.device.friendlyName,
