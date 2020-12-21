@@ -1,19 +1,27 @@
-const express = require('express') 
-const cors = require('cors')
-const compression = require('compression')
-const bodyParser = require('body-parser');
-const path = require('path')
-const Wemo = require('wemo-client')
+import express from 'express'
+import cors from 'cors'
+import compression from 'compression'
+import bodyParser from 'body-parser'
+import path from 'path'
+import http from 'http'
+import Wemo from 'wemo-client'
+import { Server } from "socket.io";
 
 const app = express()
 const port = 3000
 const wemo = new Wemo({
-  port: 1234,
   discover_opts: {
-    unicastBindPort: 1235,
-  },
+    explicitSocketBind: true,
+  }
 });
 
+const server = http.createServer(app)
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+})
 
 app.use(cors())
 app.use(compression())
@@ -24,28 +32,57 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '/dist/index.html'))
 })
 
-app.get('/api', (req, res) => {
-  res.send(["test"])
+var devices = {}
+app.get('/api', async (req, res) => {
+  var list = []
+  for (const [sn, d] of Object.entries(devices)) {
+    console.log("getting state of", d.device.friendlyName)
+    await new Promise((resolve, reject) =>{
+      d.getBinaryState((err, state) =>{
+        list.push ({
+          name: d.device.friendlyName,
+          serialNumber: sn,
+          state: state
+        })
+        resolve()
+      })
+    })
+  }
+  console.log(list)
+  res.send(list)
 })
 
-wemo.discover(function (device) {
-  console.log(`Wemo Device Found: ${device.friendlyName}`);
+app.post('/api', (req, res) => {
+  let device = devices[req.body.serialNumber]
+  console.log("sn", req.body)
+  device.getBinaryState((err, state) =>{
+    console.log("toggling", device.device.friendlyName, state == 1 ? 0 : 1)
+    device.setBinaryState(state == 1 ? 0 : 1, (err, result)=>{
+      res.send(result)
+    })
+  })
+})
 
-  var client = wemo.client(device);
+wemo.discover(function(err, deviceInfo) {
+  console.log('Wemo Device Found: %j', deviceInfo.friendlyName)
 
-  client.on('error', function (err) {
-    console.log(`Error: ${err.code}`);
-  });
+  var client = wemo.client(deviceInfo)
+  devices[client.device.serialNumber] =  client
+ 
+  client.on('error', function(err) {
+    console.log('Error: %s', err.code);
+  })
 
-  client.on('binaryState', function (value) {
-    console.log(`Light State changed to: ${!!value}`);
-  });
+  client.on('binaryState', function(value) {
+    io.emit('stateChange', {serialNumber: client.device.serialNumber, state: value})
+  })
+})
 
-  console.log(client)
-});
+io.on('connect', (socket)=>{
+	console.log("Connected new user:", socket.id)
+	//client managment
+})
 
-
-
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+server.listen(port, () => {
+  console.log(`app listening at http://localhost:${port}`)
 })

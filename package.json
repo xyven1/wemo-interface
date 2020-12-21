@@ -5,19 +5,25 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "start": "nodemon server.js"
   },
   "dependencies": {
     "axios": "^0.21.0",
+    "bootstrap": "^4.5.3",
     "core-js": "^3.6.5",
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "register-service-worker": "^1.7.1",
+    "socket.io": "^3.0.4",
+    "socket.io-client": "^3.0.4",
     "vue": "^3.0.0",
     "wemo-client": "^0.15.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-plugin-eslint": "~4.5.0",
+    "@vue/cli-plugin-pwa": "~4.5.0",
     "@vue/cli-service": "~4.5.0",
     "@vue/compiler-sfc": "^3.0.0",
     "babel-eslint": "^10.1.0",
@@ -38,6 +44,7 @@
     },
     "rules": {}
   },
+  "type": "module",
   "browserslist": [
     "> 1%",
     "last 2 versions",
