@@ -53,10 +53,10 @@ app.get('/api', async (req, res) => {
 })
 
 app.post('/api', (req, res) => {
+  io.emit('stateChange', {serialNumber: req.body.serialNumber, state: 2})
   let device = devices[req.body.serialNumber]
-  console.log("sn", req.body)
   device.getBinaryState((err, state) =>{
-    console.log("toggling", device.device.friendlyName, state == 1 ? 0 : 1)
+    console.log("Toggling", device.device.friendlyName, state == 1 ? "Off" : "On")
     device.setBinaryState(state == 1 ? 0 : 1, (err, result)=>{
       res.send(result)
     })
@@ -74,7 +74,7 @@ wemo.discover(function(err, deviceInfo) {
   })
 
   client.on('binaryState', function(value) {
-    io.emit('stateChange', {serialNumber: client.device.serialNumber, state: value})
+    io.emit('stateChange', {serialNumber: client.device.serialNumber, state: parseInt(value)})
   })
 })
 
