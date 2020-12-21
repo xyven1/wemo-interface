@@ -1,15 +1,29 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div v-if="!switches">
+    Loading...
+  </div>
+  <button v-for="(sw, index) in switches" :key="index">
+    {{sw}}
+  </button>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-
+import axios from 'axios'
 export default {
   name: 'App',
   components: {
-    HelloWorld
+  },
+  data(){
+    return {
+      switches: null,
+    }
+  },
+  async mounted(){
+    var vm = this
+    await axios.get("http://localhost:3000/api").then((res)=>{
+      vm.switches = res.data
+      console.log(res)
+    })
   }
 }
 </script>
