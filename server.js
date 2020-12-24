@@ -62,23 +62,25 @@ app.post('/api', (req, res) => {
   })
 })
 
-function onDiscover(err, deviceInfo) {
-  console.log('Wemo Device Found: %j', deviceInfo.friendlyName)
+function discover() {
+  console.log("searching...")
+  wemo.discover((err, deviceInfo) => {
+    console.log('Wemo Device Found: %j', deviceInfo.friendlyName)
 
-  var client = wemo.client(deviceInfo)
-  devices[client.device.serialNumber] = client
-  
-  client.on('error', err =>
-    console.log('Error: %s', err.code)
-  )
- 
-  client.on('binaryState', value =>
-    io.emit('stateChange', {serialNumber: client.device.serialNumber, state: parseInt(value)})
-  )
+    var client = wemo.client(deviceInfo)
+    devices[client.device.serialNumber] = client
+
+    client.on('error', err =>
+      console.log('Error: %s', err.code)
+    )
+
+    client.on('binaryState', value =>
+      io.emit('stateChange', {serialNumber: client.device.serialNumber, state: parseInt(value)})
+    )
+  })
 }
 
-
-wemo.discover((e,d) => onDiscover(e, d))
+discover()
 
 io.on('connect', (socket)=>{
 	console.log("Connected new user:", socket.id)
@@ -89,4 +91,4 @@ server.listen(port, () => {
   console.log(`app listening at http://localhost:${port}`)
 })
 
-setInterval(wemo.discover((e,d) => onDiscover(e, d)), 10000)
+setInterval(discover, 10000)
