@@ -4,7 +4,7 @@
     <button class="btn btn-info" @click="toggleInterfaceType()">Toggle Inteface Type</button>
   </nav>
   <div v-if="!mapInterface" class="bg-dark d-flex flex-column align-items-center justify-content-end justify-content-sm-start pt-2 pb-5" style="height: 100%">
-    <div v-if="switches" class="spinner-border text-light p-2 align-self-center mb-auto">
+    <div v-if="!switches" class="spinner-border text-light p-2 align-self-center mb-auto">
       <span class="sr-only">Loading...</span>
     </div>
     <div v-for="(sw, index) in switches" :key="index" class="p-1">
