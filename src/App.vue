@@ -1,10 +1,10 @@
 <template>
   <nav class="navbar fixed-top navbar-dark bg-dark">
     <a class="navbar-brand">Wemo Interface</a>
-    <button class="btn btn-info" @click="mapInterface=!mapInterface">Toggle Inteface Type</button>
+    <button class="btn btn-info" @click="toggleInterfaceType()">Toggle Inteface Type</button>
   </nav>
   <div v-if="!mapInterface" class="bg-dark d-flex flex-column align-items-center justify-content-end justify-content-sm-start pt-2 pb-5" style="height: 100%">
-    <div v-if="!switches" class="spinner-border text-light p-2 align-self-center mb-auto">
+    <div v-if="switches" class="spinner-border text-light p-2 align-self-center mb-auto">
       <span class="sr-only">Loading...</span>
     </div>
     <div v-for="(sw, index) in switches" :key="index" class="p-1">
@@ -13,7 +13,10 @@
       </button>
     </div>
   </div>
-  <svg v-if="mapInterface" class="bg-dark" viewBox="0 0 295 515" style="max-height: 100%; max-width: 100%; height: 100%; width: 100%" xmlns="http://www.w3.org/2000/svg">
+  <svg v-show="mapInterface" class="bg-dark" viewBox="0 0 295 515" style="max-height: 100%; max-width: 100%; height: 100%; width: 100%" xmlns="http://www.w3.org/2000/svg">
+    <path v-if="!switches" fill="#ffffff" d="M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z">
+      <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"/>
+    </path>
     <path id="221820K1300DC1"  @click="mapClick" d="M 185.43600463867188 309.0169982910156 L 211.1280059814453 254.75900268554688 L 257.37200927734375 274.85101318359375 L 232.15699768066406 331.2550048828125 Z"
       style="fill: rgb(222, 222, 222); cursor: pointer;">
       <title>Dining Room</title>
@@ -88,18 +91,37 @@ export default {
   },
   async mounted(){
     var vm = this
+    if(localStorage.map)
+      vm.mapInterface = localStorage.map == "true"
+    else
+      localStorage.map = vm.mapInterface  
     await axios.get("http://10.200.10.195:3000/api").then((res)=>{
       vm.switches = res.data
+      res.data.forEach(sw => {
+        console.log("map", sw)
+        document.getElementById(sw.serialNumber).style.fill = ({
+          0: '#DEDEDE',
+          1: '#FFD300',
+          2: '#17a2b8',
+          Error: 'FF0000'
+        })[sw.state]
+      });
     })
     vm.$socket.on('stateChange', (data)=>{
       document.getElementById(data.serialNumber).style.fill = ({
         0: '#DEDEDE',
         1: '#FFD300',
+        2: '#17a2b8',
         Error: 'FF0000'
       })[data.state]
     })
   },
   methods: {
+    toggleInterfaceType(){
+      var vm = this
+      vm.mapInterface = !vm.mapInterface
+      localStorage.map = vm.mapInterface
+    },
     async toggle(sw){
       var newState
       await axios.post("http://10.200.10.195:3000/api", {serialNumber: sw.serialNumber}).then((res)=>{
