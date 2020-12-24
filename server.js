@@ -36,7 +36,7 @@ var devices = {}
 app.get('/api', async (req, res) => {
   var list = []
   for (const [sn, d] of Object.entries(devices)) {
-    console.log("getting state of", d.device.friendlyName)
+    console.log('Getting state of: %j', d.device.friendlyName)
     await new Promise((resolve) =>{
       d.getBinaryState((err, state) =>{
         list.push ({
@@ -48,7 +48,6 @@ app.get('/api', async (req, res) => {
       })
     })
   }
-  console.log(list)
   res.send(list)
 })
 
@@ -63,20 +62,23 @@ app.post('/api', (req, res) => {
   })
 })
 
-wemo.discover(function(err, deviceInfo) {
+function onDiscover(err, deviceInfo) {
   console.log('Wemo Device Found: %j', deviceInfo.friendlyName)
 
   var client = wemo.client(deviceInfo)
-  devices[client.device.serialNumber] =  client
+  devices[client.device.serialNumber] = client
+  
+  client.on('error', err =>
+    console.log('Error: %s', err.code)
+  )
  
-  client.on('error', function(err) {
-    console.log('Error: %s', err.code);
-  })
-
-  client.on('binaryState', function(value) {
+  client.on('binaryState', value =>
     io.emit('stateChange', {serialNumber: client.device.serialNumber, state: parseInt(value)})
-  })
-})
+  )
+}
+
+
+wemo.discover((e,d) => onDiscover(e, d))
 
 io.on('connect', (socket)=>{
 	console.log("Connected new user:", socket.id)
@@ -86,3 +88,5 @@ io.on('connect', (socket)=>{
 server.listen(port, () => {
   console.log(`app listening at http://localhost:${port}`)
 })
+
+setInterval(wemo.discover((e,d) => onDiscover(e, d)), 10000)
