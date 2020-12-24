@@ -1,6 +1,6 @@
 <template>
   <nav class="navbar fixed-top navbar-dark bg-dark">
-    <a class="navbar-brand">Wemo Interface</a>
+    <a class="navbar-brand">Wemo App</a>
     <button class="btn btn-info" @click="toggleInterfaceType()">Toggle Inteface Type</button>
   </nav>
   <div v-if="!mapInterface" class="bg-dark d-flex flex-column align-items-center justify-content-end justify-content-sm-start pt-2 pb-5" style="height: 100%">
