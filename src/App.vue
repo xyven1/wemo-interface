@@ -1,7 +1,13 @@
 <template>
   <nav class="navbar fixed-top navbar-dark bg-dark">
     <a class="navbar-brand">Wemo App</a>
-    <button class="btn btn-info" @click="toggleInterfaceType()">Toggle Inteface Type</button>
+    <div class="d-flex">
+      <button class="btn btn-info m-1" @click="allOff">All Off</button> 
+      <button class="btn btn-info m-1"  @click="toggleInterfaceType">
+        <BIconList v-if="mapInterface" style="height:1.5em; width: 1.5em"/>
+        <BIconMap v-else style="height:1.5em; width: 1.5em"/>
+      </button>
+    </div>
   </nav>
   <Map v-if="mapInterface" :switches="switches" :toggle="toggle" ref="map"/>
   <div v-else class="bg-dark d-flex flex-column align-items-center justify-content-end justify-content-sm-start pt-2 pb-5" style="height: 100%">
@@ -19,11 +25,13 @@
 <script>
 import axios from 'axios'
 import Map from './components/Map'
-
+import {BIconList, BIconMap} from 'bootstrap-icons-vue'
 export default {
   name: 'App',
   components: {
-    Map
+    Map,
+    BIconList,
+    BIconMap
   },
   data(){
     return {
@@ -62,6 +70,14 @@ export default {
       })
       return newState
     },
+    allOff(){
+      var vm = this
+      if(confirm("Are you sure you want to turn off all the lights?"))
+        vm.switches.forEach(sw => {
+          if(sw.state ==1)
+            vm.toggle(sw)
+        })
+    },
   }
 }
 </script>
@@ -73,5 +89,9 @@ export default {
 }
 body{
   padding-top: 54px
+}
+.btn:focus, .btn:active{
+  outline: none !important;
+  box-shadow: none !important;
 }
 </style>

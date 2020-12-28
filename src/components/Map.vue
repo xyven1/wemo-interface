@@ -8,11 +8,11 @@
         style="cursor: pointer;"
         :style="{
           fill: ({ 
-            0: '#DEDEDE',
+            0: '#DDDDDD',
             1: '#FFD300',
             2: '#17a2b8',
             Error: 'FF0000'
-          })[region.sw?.state] || '#DEDEDE'
+          })[region.sw?.state] || '#707070'
         }">
         <title>
           {{region.title}}
