@@ -8,7 +8,6 @@ import Wemo from 'wemo-client'
 import { Server } from "socket.io";
 
 const app = express()
-const port = 3000
 const wemo = new Wemo({
   discover_opts: {
     explicitSocketBind: true,
@@ -87,8 +86,8 @@ io.on('connect', (socket)=>{
 	//client managment
 })
 
-server.listen(port, () => {
-  console.log(`app listening at http://localhost:${port}`)
+server.listen(process.env.SERVER_PORT, () => {
+  console.log(`app listening at http://localhost:${process.env.SERVER_PORT}`)
 })
 
 setInterval(discover, 10000)

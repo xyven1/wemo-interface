@@ -5,6 +5,6 @@ import { io } from 'socket.io-client';
 
 const app = createApp(App)
 
-app.config.globalProperties.$socket = io('http://10.200.10.195:3000')
+app.config.globalProperties.$socket = io(process.env.VUE_APP_URL)
 
 app.mount('#app')
