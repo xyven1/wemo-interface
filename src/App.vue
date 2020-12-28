@@ -26,6 +26,7 @@
 import axios from 'axios'
 import Map from './components/Map'
 import {BIconList, BIconMap} from 'bootstrap-icons-vue'
+import { nextTick } from 'vue'
 export default {
   name: 'App',
   components: {
@@ -47,30 +48,36 @@ export default {
       localStorage.map = vm.mapInterface  
     await axios.get(process.env.VUE_APP_URL+"/api").then((res)=>{
       vm.switches = res.data
+      if(vm.mapInterface) vm.$refs.map.initialize()
     })
     vm.$socket.on('stateChange', (data)=>{
+      console.log(data)
       vm.switches.find(s=> s.serialNumber == data.serialNumber).state = data.state
     })
   },
+  unmounted(){
+    this.$socket.off('stateChange')
+  },
   methods: {
-    toggleInterfaceType(){
+    async toggleInterfaceType(){ //toggles interface, manages localStorage, and runs intialization function when switching to map
       var vm = this
       vm.mapInterface = !vm.mapInterface
+      if(vm.mapInterface){
+        await nextTick()
+        vm.$refs.map.initialize()
+      }
       localStorage.map = vm.mapInterface
     },
-    async toggle(sw){
-      console.log(sw)
-      var newState
+    async toggle(sw){ //toggles a switch, updates switches array accordingly
+      console.log('toggling:', sw.name)
       await axios.post(process.env.VUE_APP_URL+"/api", {serialNumber: sw.serialNumber}).then((res)=>{
         if(res.data.BinaryState == "Error")
-          sw.state = -1
+          sw.state = 'Error'
         else
           sw.state = parseInt(res.data.BinaryState)
-        newState = res.data.BinaryState
       })
-      return newState
     },
-    allOff(){
+    allOff(){ //turns all switches off, with confirmation
       var vm = this
       if(confirm("Are you sure you want to turn off all the lights?"))
         vm.switches.forEach(sw => {

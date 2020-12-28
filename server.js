@@ -4,17 +4,20 @@ import compression from 'compression'
 import bodyParser from 'body-parser'
 import path from 'path'
 import http from 'http'
+import fs from 'fs'
 import Wemo from 'wemo-client'
 import { Server } from "socket.io";
 
 const app = express()
+const server = http.createServer(app)
+var devices = {}
+
+//configs
 const wemo = new Wemo({
   discover_opts: {
     explicitSocketBind: true,
   }
 });
-
-const server = http.createServer(app)
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -22,16 +25,18 @@ const io = new Server(server, {
   }
 })
 
+//middleware
 app.use(cors())
 app.use(compression())
 app.use(bodyParser.json())
 app.use(express.static('dist'))
 
+//serves static files in dist
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '/dist/index.html'))
 })
 
-var devices = {}
+//returns list of switches
 app.get('/api', async (req, res) => {
   var list = []
   for (const [sn, d] of Object.entries(devices)) {
@@ -50,6 +55,7 @@ app.get('/api', async (req, res) => {
   res.send(list)
 })
 
+//allows client to toggle switches using serial number
 app.post('/api', (req, res) => {
   io.emit('stateChange', {serialNumber: req.body.serialNumber, state: 2})
   let device = devices[req.body.serialNumber]
@@ -61,6 +67,23 @@ app.post('/api', (req, res) => {
   })
 })
 
+//returns parsed array containing data for svg, containing associations between map regions and serial number of switch
+app.get('/api/svg', (req, res) => {
+  fs.readFile('./svg.json', (err,data)=>{
+    res.send(JSON.parse(data))
+  })
+})
+
+//allows client to change serial number associated to a region
+app.post('/api/svg', (req, res) => {
+  fs.readFile('./svg.json', (err,data)=>{
+    var parsed = JSON.parse(data)
+    parsed.find(r=>r.d == req.body.d).sn = req.body.sn
+    fs.writeFile('./svg.json', JSON.stringify(parsed,null, 2), (err)=>{if(err) throw err; res.send("file edited")})
+  })
+})
+
+//discovers wemo devices connected to network
 function discover() {
   console.log("searching...")
   wemo.discover((err, deviceInfo) => {
@@ -73,21 +96,20 @@ function discover() {
       console.log('Error: %s', err.code)
     )
 
-    client.on('binaryState', value =>
+    client.on('binaryState', value =>{
+      console.log(value)
       io.emit('stateChange', {serialNumber: client.device.serialNumber, state: parseInt(value)})
-    )
+    })
   })
 }
 
+//inital discover run
 discover()
 
-io.on('connect', (socket)=>{
-	console.log("Connected new user:", socket.id)
-	//client managment
-})
-
+//initilize server
 server.listen(process.env.SERVER_PORT, () => {
   console.log(`app listening at http://localhost:${process.env.SERVER_PORT}`)
 })
 
+//repeated discover run every 10 seconds
 setInterval(discover, 10000)
