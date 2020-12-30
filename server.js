@@ -98,6 +98,7 @@ const sync = debounce(()=>{
     fs.writeFile('./devices.json', JSON.stringify(parsed,null, 2), (err)=>{if(err) console.log(err)})
   })
 }, 1000)
+
 //client managment
 function manageClient(deviceInfo){
   var client = wemo.client(deviceInfo)
@@ -111,6 +112,7 @@ function manageClient(deviceInfo){
     io.emit('stateChange', {serialNumber: client.device.serialNumber, state: parseInt(value)})
   })
 }
+
 //discovers wemo devices connected to network
 function discover() {
   console.log("searching...")
@@ -137,6 +139,13 @@ function loadDevices(){
     })
   })
 }
+
+io.on('connection', (socket) => {
+  console.log('a user connected:', socket.id);
+  socket.on('disconnect', (reason) => {
+    console.log('disconnecting:', socket.id, "because: ", reason)
+  });
+});
 
 //load all stored devices
 loadDevices()
