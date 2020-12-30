@@ -6,7 +6,8 @@ import path from 'path'
 import http from 'http'
 import fs from 'fs'
 import Wemo from 'wemo-client'
-import { Server } from "socket.io";
+import { Server } from "socket.io"
+import debounce from "debounce"
 
 const app = express()
 const server = http.createServer(app)
@@ -79,32 +80,66 @@ app.post('/api/svg', (req, res) => {
   fs.readFile('./svg.json', (err,data)=>{
     var parsed = JSON.parse(data)
     parsed.find(r=>r.d == req.body.d).sn = req.body.sn
-    fs.writeFile('./svg.json', JSON.stringify(parsed,null, 2), (err)=>{if(err) throw err; res.send("file edited")})
+    fs.writeFile('./svg.json', JSON.stringify(parsed,null, 2), (err)=>{if(err) console.log(err); res.send("file edited")})
   })
 })
 
+//sync devices loaded onto server with devices stored on file
+const sync = debounce(()=>{
+  fs.readFile('./devices.json', (err,data)=>{
+    var parsed = JSON.parse(data)
+    for (const [sn, client] of Object.entries(devices)) {
+      let sw = parsed.find(sw=>sw.name==client.device.friendlyName)
+      if(sw)
+        sw = {name: client.device.friendlyName, ip: client.device.host, port: client.device.port}
+      else
+        parsed.push({name: client.device.friendlyName, ip: client.device.host, port: client.device.port})
+    }
+    fs.writeFile('./devices.json', JSON.stringify(parsed,null, 2), (err)=>{if(err) console.log(err)})
+  })
+}, 1000)
+//client managment
+function manageClient(deviceInfo){
+  var client = wemo.client(deviceInfo)
+  devices[client.device.serialNumber] = client
+
+  client.on('error', err => {
+    console.log('Error: %s', err.code)
+  })
+
+  client.on('binaryState', value =>{
+    io.emit('stateChange', {serialNumber: client.device.serialNumber, state: parseInt(value)})
+  })
+}
 //discovers wemo devices connected to network
 function discover() {
   console.log("searching...")
   wemo.discover((err, deviceInfo) => {
+    if(err) 
+      return console.log("Error in discovery:", err)
     console.log('Wemo Device Found: %j', deviceInfo.friendlyName)
+    manageClient(deviceInfo)
+    sync()
+  })
+}
 
-    var client = wemo.client(deviceInfo)
-    devices[client.device.serialNumber] = client
-
-    client.on('error', err =>
-      console.log('Error: %s', err.code)
-    )
-
-    client.on('binaryState', value =>{
-      console.log(value)
-      io.emit('stateChange', {serialNumber: client.device.serialNumber, state: parseInt(value)})
+//loads devices from devices.json
+function loadDevices(){
+  fs.readFile('./devices.json', (err,data)=>{
+    var parsed = JSON.parse(data)
+    parsed.forEach(sw => {
+      wemo.load(`http://${sw.ip}:${sw.port}/setup.xml`, (err, deviceInfo)=>{
+        if(err) 
+          return console.log("Failed to Load:", err)
+        console.log('Loaded Device: %j', deviceInfo.friendlyName)
+        manageClient(deviceInfo)
+      })  
     })
   })
 }
 
-//inital discover run
-discover()
+//load all stored devices
+loadDevices()
 
 //initilize server
 server.listen(process.env.SERVER_PORT, () => {
