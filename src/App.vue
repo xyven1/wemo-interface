@@ -55,9 +55,12 @@ export default {
       vm.switches.find(s=> s.serialNumber == data.serialNumber).state = data.state
     })
     vm.$socket.io.on('reconnect', () => {
-      axios.get(process.env.VUE_APP_URL+"/api").then((res)=>{
-        vm.switches = res.data
-      })
+      if(vm.mapInterface)
+        location.reload()
+      else
+        axios.get(process.env.VUE_APP_URL+"/api").then((res)=>{
+          vm.switches = res.data
+        })
     })
   },
   unmounted(){
