@@ -51,7 +51,6 @@ export default {
       if(vm.mapInterface) vm.$refs.map.initialize()
     })
     vm.$socket.on('stateChange', (data)=>{
-      console.log(data)
       vm.switches.find(s=> s.serialNumber == data.serialNumber).state = data.state
     })
     vm.$socket.io.on('reconnect', () => {
@@ -77,7 +76,6 @@ export default {
       localStorage.map = vm.mapInterface
     },
     async toggle(sw){ //toggles a switch, updates switches array accordingly
-      console.log('toggling:', sw.name)
       await axios.post(process.env.VUE_APP_URL+"/api", {serialNumber: sw.serialNumber}).then((res)=>{
         if(res.data.BinaryState == "Error")
           sw.state = 'Error'

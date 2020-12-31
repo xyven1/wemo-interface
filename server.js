@@ -39,21 +39,21 @@ app.get('/', (req, res) => {
 
 //returns list of switches
 app.get('/api', async (req, res) => {
-  var list = []
-  for (const [sn, d] of Object.entries(devices)) {
-    console.log('Getting state of: %j', d.device.friendlyName)
-    await new Promise((resolve) =>{
-      d.getBinaryState((err, state) =>{
-        list.push ({
-          name: d.device.friendlyName,
-          serialNumber: sn,
-          state: state
+  console.log('Getting state of switches')
+  await Promise.all(Object.entries(devices).map(([sn,d]) => {
+    return Promise.race([
+      new Promise((resolve) =>{
+        d.getBinaryState((err, state) =>{
+          resolve({
+            name: d.device.friendlyName,
+            serialNumber: sn,
+            state: state
+          })
         })
-        resolve()
-      })
-    })
-  }
-  res.send(list)
+      }),
+      new Promise((res, rej) => setTimeout(rej, 2000))
+    ])
+  })).then((values)=>res.send(values))
 })
 
 //allows client to toggle switches using serial number
