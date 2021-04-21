@@ -1,13 +1,13 @@
 import express from 'express'
 import cors from 'cors'
 import compression from 'compression'
-import bodyParser from 'body-parser'
 import path from 'path'
 import http from 'http'
 import fs from 'fs'
 import Wemo from 'wemo-client'
 import { Server } from "socket.io"
 import debounce from "debounce"
+import axios from 'axios'
 
 const app = express()
 const server = http.createServer(app)
@@ -29,7 +29,6 @@ const io = new Server(server, {
 //middleware
 app.use(cors())
 app.use(compression())
-app.use(bodyParser.json())
 app.use(express.static('dist'))
 
 //serves static files in dist
@@ -89,11 +88,10 @@ const sync = debounce(()=>{
   fs.readFile('./devices.json', (err,data)=>{
     var parsed = JSON.parse(data)
     for (const [sn, client] of Object.entries(devices)) {
-      let sw = parsed.find(sw=>sw.name==client.device.friendlyName)
-      if(sw)
-        sw = {name: client.device.friendlyName, ip: client.device.host, port: client.device.port}
-      else
-        parsed.push({name: client.device.friendlyName, ip: client.device.host, port: client.device.port})
+      let sw = parsed.find(sw=>sw.serialNumber==client.device.serialNumber)
+      let device = {name: client.device.friendlyName, serialNumber: client.device.serialNumber, ip: client.device.host, port: client.device.port}
+      if(sw) sw = device
+      else parsed.push(device)
     }
     fs.writeFile('./devices.json', JSON.stringify(parsed,null, 2), (err)=>{if(err) console.log(err)})
   })
@@ -157,3 +155,11 @@ server.listen(process.env.SERVER_PORT, () => {
 
 //repeated discover run every 10 seconds
 setInterval(discover, 10000)
+setInterval(()=>{ //maganage duck heat
+  var d = devices['221814K0102A85']
+  axios.get('http://10.200.10.13').then((res)=>{
+    if(res.data.sensor>80) d.setBinaryState(0)
+    if(res.data.sensor<75) d.setBinaryState(1)
+    io.emit('duckTemp', res.data)
+  }).catch(()=>{})
+}, 1e3)

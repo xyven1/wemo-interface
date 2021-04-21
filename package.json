@@ -53,5 +53,11 @@
     "last 2 versions",
     "not dead"
   ],
-  "type": "module"
+  "type": "module",
+  "nodemonConfig": {
+    "ignore": [
+      "devices.json",
+      "svg.json"
+    ]
+  }
 }

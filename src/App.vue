@@ -1,7 +1,8 @@
 <template>
   <nav class="navbar fixed-top navbar-dark bg-dark">
     <a class="navbar-brand">Wemo App</a>
-    <div class="d-flex">
+    <div class="navbar-right">
+      <p class="navbar-text pr-2 mb-0">{{duckTemp?.toFixed(1)}}°F</p>
       <button class="btn btn-info m-1" @click="allOff">All Off</button> 
       <button class="btn btn-info m-1"  @click="toggleInterfaceType">
         <BIconList v-if="mapInterface" style="height:1.5em; width: 1.5em"/>
@@ -37,7 +38,8 @@ export default {
   data(){
     return {
       switches: null,
-      mapInterface: false
+      mapInterface: false,
+      duckTemp: null
     }
   },
   async mounted(){
@@ -52,6 +54,9 @@ export default {
     })
     vm.$socket.on('stateChange', (data)=>{
       vm.switches.find(s=> s.serialNumber == data.serialNumber).state = data.state
+    })
+    vm.$socket.on('duckTemp', (data)=>{
+      vm.duckTemp = data.sensor
     })
     vm.$socket.io.on('reconnect', () => {
       if(vm.mapInterface)

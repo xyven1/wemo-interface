@@ -1,47 +1,98 @@
 [
   {
-    "name": "Bedroom",
-    "ip": "10.200.10.180",
+    "name": "Garage",
+    "serialNumber": "2279B1K0110A98",
+    "ip": "10.200.10.92",
     "port": "49154"
   },
   {
+    "name": "Back Flood",
+    "serialNumber": "221820K130164A",
+    "ip": "10.200.10.240",
+    "port": "49153"
+  },
+  {
+    "name": "Pump Room",
+    "serialNumber": "221820K13017B6",
+    "ip": "10.200.10.54",
+    "port": "49153"
+  },
+  {
+    "name": "Ducks",
+    "serialNumber": "221814K0102A85",
+    "ip": "10.200.10.183",
+    "port": "49153"
+  },
+  {
+    "name": "Mud Room",
+    "serialNumber": "221820K13012CF",
+    "ip": "10.200.10.86",
+    "port": "49153"
+  },
+  {
+    "name": "Front Bedroom",
+    "serialNumber": "M1BAA129N03A28",
+    "ip": "10.200.10.220",
+    "port": "49153"
+  },
+  {
+    "name": "Master Bath",
+    "serialNumber": "221941K1300385",
+    "ip": "10.200.10.136",
+    "port": "49153"
+  },
+  {
+    "name": "Front Porch",
+    "serialNumber": "221941K13006EB",
+    "ip": "10.200.10.214",
+    "port": "49153"
+  },
+  {
+    "name": "Kitchen",
+    "serialNumber": "221941K13003F0",
+    "ip": "10.200.10.191",
+    "port": "49153"
+  },
+  {
+    "name": "Front Hall",
+    "serialNumber": "221941K1300690",
+    "ip": "10.200.10.228",
+    "port": "49153"
+  },
+  {
+    "name": "Diningroom",
+    "serialNumber": "221820K1300DC1",
+    "ip": "10.200.10.213",
+    "port": "49153"
+  },
+  {
+    "name": "Corner Bedroom",
+    "serialNumber": "M1BAA129N038A1",
+    "ip": "10.200.10.4",
+    "port": "49153"
+  },
+  {
+    "name": "Master Overhead",
+    "serialNumber": "M1BAA129N03A1C",
+    "ip": "10.200.10.197",
+    "port": "49153"
+  },
+  {
+    "name": "Bedroom",
+    "serialNumber": "22A9B1K0107F37",
+    "ip": "10.200.10.180",
+    "port": "49153"
+  },
+  {
     "name": "Living Room",
+    "serialNumber": "221820K1300E7B",
     "ip": "10.200.10.138",
     "port": "49153"
   },
   {
     "name": "Porch",
+    "serialNumber": "221820K130105F",
     "ip": "10.200.10.53",
-    "port": "49153"
-  },
-  {
-    "name": "Diningroom",
-    "ip": "10.200.10.213",
-    "port": "49153"
-  },
-  {
-    "name": "Front Porch",
-    "ip": "10.200.10.214",
-    "port": "49153"
-  },
-  {
-    "name": "Front Hall",
-    "ip": "10.200.10.228",
-    "port": "49153"
-  },
-  {
-    "name": "Mud Room",
-    "ip": "10.200.10.86",
-    "port": "49153"
-  },
-  {
-    "name": "Garage",
-    "ip": "10.200.10.92",
-    "port": "49153"
-  },
-  {
-    "name": "Kitchen",
-    "ip": "10.200.10.191",
     "port": "49153"
   }
 ]
