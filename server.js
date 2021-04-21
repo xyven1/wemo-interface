@@ -3,6 +3,7 @@ import cors from 'cors'
 import compression from 'compression'
 import path from 'path'
 import http from 'http'
+import bodyParser from 'body-parser'
 import fs from 'fs'
 import Wemo from 'wemo-client'
 import { Server } from "socket.io"
@@ -29,6 +30,7 @@ const io = new Server(server, {
 //middleware
 app.use(cors())
 app.use(compression())
+app.use(bodyParser.json())
 app.use(express.static('dist'))
 
 //serves static files in dist
@@ -57,6 +59,7 @@ app.get('/api', async (req, res) => {
 
 //allows client to toggle switches using serial number
 app.post('/api', (req, res) => {
+  console.log(req.body)
   io.emit('stateChange', {serialNumber: req.body.serialNumber, state: 2})
   let device = devices[req.body.serialNumber]
   device.getBinaryState((err, state) =>{
@@ -87,7 +90,7 @@ app.post('/api/svg', (req, res) => {
 const sync = debounce(()=>{
   fs.readFile('./devices.json', (err,data)=>{
     var parsed = JSON.parse(data)
-    for (const [sn, client] of Object.entries(devices)) {
+    for (const [, client] of Object.entries(devices)) {
       let sw = parsed.find(sw=>sw.serialNumber==client.device.serialNumber)
       let device = {name: client.device.friendlyName, serialNumber: client.device.serialNumber, ip: client.device.host, port: client.device.port}
       if(sw) sw = device
