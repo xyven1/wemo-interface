@@ -52,7 +52,7 @@ app.get('/api', async (req, res) => {
           })
         })
       }),
-      new Promise((res, rej) => setTimeout(rej, 2000))
+      new Promise(res=> setTimeout(res, 2000))
     ])
   })).then((values)=>res.send(values))
 })
