@@ -54,7 +54,7 @@ app.get('/api', async (req, res) => {
       }),
       new Promise(res=> setTimeout(res, 2000))
     ])
-  })).then((values)=>res.send(values))
+  })).then((values)=>res.send(values.filter(v=>v!=null)))
 })
 
 //allows client to toggle switches using serial number
