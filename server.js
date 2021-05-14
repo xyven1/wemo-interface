@@ -81,7 +81,7 @@ app.get('/api/svg', (req, res) => {
 app.post('/api/svg', (req, res) => {
   fs.readFile('./svg.json', (err,data)=>{
     var parsed = JSON.parse(data)
-    parsed.find(r=>r.d == req.body.d).sn = req.body.sn
+    parsed.flatMap(r=>r.regions).find(r=>r.d == req.body.d).sn = req.body.sn
     fs.writeFile('./svg.json', JSON.stringify(parsed,null, 2), (err)=>{if(err) console.log(err); res.send("file edited")})
   })
 })
