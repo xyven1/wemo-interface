@@ -1,9 +1,6 @@
 <template>
   <transition v-touch:swipe="swipeHandler" class="div-slider" :name="back? 'slideback' : 'slide'">
     <svg class="bg-dark svg" viewBox="0 0 295 515" :key="screen">
-      <path v-if="!switches" fill="#ffffff" d="M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z">
-        <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"/>
-      </path>
       <path v-for="(region, index) in regions?.[screen].regions" :key="index" :d="region.d" @click="selecting ? event.emit('selection', region) : toggle(region.sw)"
         style="cursor: pointer;"
         :style="{
@@ -20,12 +17,17 @@
       </path>
     </svg>
   </transition>
-  <div class="overlay d-none d-sm-block">
+  <div class="overlay">
     <div class="row align-items-center" style="height:100%; margin: 0;" >
-      <div class="col" >
+      <div class="col d-none d-sm-block" >
         <BIconCaretLeft class="icon" @click="prev" v-if="screen>0"/>
       </div>
-      <div class="col">
+      <div class="col d-flex justify-content-center">
+        <div v-if="!switches" class="spinner-border text-light p-2 mb-auto">
+          <span class="sr-only">Loading...</span>
+        </div>
+      </div>
+      <div class="col d-none d-sm-block">
         <BIconCaretRight class="icon float-right" @click="next" v-if="screen<regions?.length-1"/>
       </div>
     </div>
@@ -73,7 +75,7 @@ export default {
           return g
         })
       })
-      vm.associateNewSwitches()
+      //vm.associateNewSwitches()
     },
     async associateNewSwitches(){ //alerts client to un associated switches, and prompts a selection
       var vm = this
@@ -106,6 +108,11 @@ export default {
       this.screen -= this.screen > 0
     }
   },
+  computed: {
+    screenName: function () {
+      return this.regions?.[this.screen].name
+    }
+  }
 }
 </script>
 <style>

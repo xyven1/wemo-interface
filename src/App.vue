@@ -1,8 +1,10 @@
 <template>
   <nav class="navbar fixed-top navbar-dark bg-dark">
-    <a class="navbar-brand">Wemo App</a>
+    <a class="navbar-brand">
+      {{ $refs.map?.screenName}}
+    </a>
     <div class="navbar-right">
-      <p class="navbar-text pr-2 mb-0">{{duckTemp?.toFixed(1)}}°F</p>
+      <p class="navbar-text pr-2 mb-0" v-if="duckTemp">{{duckTemp.toFixed(1)}}°F</p>
       <button class="btn btn-info m-1" @click="allOff">All Off</button> 
       <button class="btn btn-info m-1"  @click="toggleInterfaceType">
         <BIconList v-if="mapInterface" style="height:1.5em; width: 1.5em"/>
@@ -12,7 +14,7 @@
   </nav>
   <Map v-if="mapInterface" :switches="switches" :toggle="toggle" ref="map"/>
   <div v-else class="bg-dark d-flex flex-column align-items-center justify-content-end justify-content-sm-start pt-2 pb-5" style="height: 100%">
-    <div v-if="!switches" class="spinner-border text-light p-2 align-self-center mb-auto">
+    <div v-if="!switches" class="spinner-border text-light p-2 align-self-center mb-auto mt-1">
       <span class="sr-only">Loading...</span>
     </div>
     <div v-for="(sw, index) in switches" :key="index" class="p-1">
@@ -106,7 +108,8 @@ export default {
   height:100%;
 }
 body{
-  padding-top: 54px
+  padding-top: 54px;
+  
 }
 .btn:focus, .btn:active{
   outline: none !important;
