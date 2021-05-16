@@ -1,6 +1,7 @@
 <template>
   <transition v-touch:swipe="swipeHandler" class="div-slider" :name="back? 'slideback' : 'slide'">
     <svg class="bg-dark svg" viewBox="0 0 295 515" :key="screen">
+      <image v-if="regions?.[screen].background" width="295" height="515" x="0" y="0" :xlink:href="require(`../assets/${regions[screen].background.name}`)"/> 
       <path v-for="(region, index) in regions?.[screen].regions" :key="index" :d="region.d" @click="selecting ? event.emit('selection', region) : toggle(region.sw)"
         style="cursor: pointer;"
         :style="{
@@ -57,6 +58,8 @@ export default {
   },
   mounted(){
     var vm = this
+    if(localStorage.screen) vm.screen = parseInt(localStorage.screen)
+    else localStorage.screen = vm.screen
     vm.event = new EventEmitter()
   },
   methods:{
@@ -75,7 +78,7 @@ export default {
           return g
         })
       })
-      //vm.associateNewSwitches()
+      vm.associateNewSwitches()
     },
     async associateNewSwitches(){ //alerts client to un associated switches, and prompts a selection
       var vm = this
@@ -112,6 +115,9 @@ export default {
     screenName: function () {
       return this.regions?.[this.screen].name
     }
+  },
+  watch: {
+    screen: function (n){ localStorage.screen = n }
   }
 }
 </script>
