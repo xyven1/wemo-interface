@@ -106,5 +106,17 @@
     "serialNumber": "M1BAA129N019C7",
     "ip": "10.200.10.106",
     "port": "49153"
+  },
+  {
+    "name": "Corner Bedroom",
+    "serialNumber": "M1BAA129N038A1",
+    "ip": "10.200.10.4",
+    "port": "49153"
+  },
+  {
+    "name": "Boiler Room",
+    "serialNumber": "M1BAA129N03BE1",
+    "ip": "10.200.10.26",
+    "port": "49153"
   }
 ]
