@@ -78,7 +78,6 @@ export default {
           return g
         })
       })
-      vm.associateNewSwitches()
     },
     async associateNewSwitches(){ //alerts client to un associated switches, and prompts a selection
       var vm = this

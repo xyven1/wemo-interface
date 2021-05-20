@@ -5,6 +5,7 @@
     </a>
     <div class="navbar-right">
       <p class="navbar-text pr-2 mb-0" v-if="duckTemp">{{duckTemp.toFixed(1)}}°F</p>
+      <button class="btn btn-info m-1" @click="bind"><BIconPlus  style="height:1.5em; width: 1.5em"/></button>
       <button class="btn btn-info m-1" @click="allOff">All Off</button> 
       <button class="btn btn-info m-1"  @click="toggleInterfaceType">
         <BIconList v-if="mapInterface" style="height:1.5em; width: 1.5em"/>
@@ -28,14 +29,15 @@
 <script>
 import axios from 'axios'
 import Map from './components/Map'
-import {BIconList, BIconMap} from 'bootstrap-icons-vue'
+import {BIconList, BIconMap, BIconPlus} from 'bootstrap-icons-vue'
 import { nextTick } from 'vue'
 export default {
   name: 'App',
   components: {
     Map,
     BIconList,
-    BIconMap
+    BIconMap,
+    BIconPlus
   },
   data(){
     return {
@@ -98,6 +100,11 @@ export default {
             vm.toggle(sw)
         })
     },
+    bind(){
+      var vm = this
+      if(vm.$refs.map)
+        vm.$refs.map.associateNewSwitches()
+    }
   }
 }
 </script>
@@ -109,7 +116,6 @@ export default {
 }
 body{
   padding-top: 54px;
-  
 }
 .btn:focus, .btn:active{
   outline: none !important;
