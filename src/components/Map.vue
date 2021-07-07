@@ -53,7 +53,7 @@ export default {
       selecting: false,
       event: null,
       back: false,
-      screen: 0,
+      screen: 1,
     }
   },
   mounted(){
