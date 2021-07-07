@@ -35,7 +35,7 @@ app.use(express.static('dist'))
 
 //serves static files in dist
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '/dist/index.html'))
+  res.sendFile(path.join(path.resolve(), '/dist/index.html'))
 })
 
 //returns list of switches
