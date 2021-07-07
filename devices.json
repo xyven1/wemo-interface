@@ -118,5 +118,29 @@
     "serialNumber": "M1BAA129N03BE1",
     "ip": "10.200.10.26",
     "port": "49153"
+  },
+  {
+    "name": "Ducks",
+    "serialNumber": "221814K0102A85",
+    "ip": "10.200.10.184",
+    "port": "49153"
+  },
+  {
+    "name": "Master Bath Mirror",
+    "serialNumber": "M1BAA129N0403A",
+    "ip": "10.200.10.44",
+    "port": "49153"
+  },
+  {
+    "name": "Control Room",
+    "serialNumber": "M1BAA129N01BAB",
+    "ip": "10.200.10.64",
+    "port": "49153"
+  },
+  {
+    "name": "Wemo Light Switch",
+    "serialNumber": "M1BAA129N0126E",
+    "ip": "10.200.10.17",
+    "port": "49153"
   }
 ]
