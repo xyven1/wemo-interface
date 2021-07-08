@@ -7,10 +7,10 @@
       <p class="navbar-text pr-2 mb-0" v-if="duckTemp">{{duckTemp.toFixed(1)}}°F</p>
       <button class="btn btn-info m-1" @click="bind"><BIconPlus  style="height:1.5em; width: 1.5em"/></button>
       <button class="btn btn-info m-1" @click="allOff">All Off</button> 
-      <button class="btn btn-info m-1"  @click="toggleInterfaceType">
-        <BIconList v-if="mapInterface" style="height:1.5em; width: 1.5em"/>
+      <v-button  @click="toggleInterfaceType">
+        <v-icon v-if="mapInterface" style="height:1.5em; width: 1.5em">mdi-menu</v-icon>
         <BIconMap v-else style="height:1.5em; width: 1.5em"/>
-      </button>
+      </v-button>
     </div>
   </nav>
   <Map v-if="mapInterface" :switches="switches" :toggle="toggle" ref="map"/>
@@ -29,13 +29,12 @@
 <script>
 import axios from 'axios'
 import Map from './components/Map'
-import {BIconList, BIconMap, BIconPlus} from 'bootstrap-icons-vue'
+import {BIconMap, BIconPlus} from 'bootstrap-icons-vue'
 import { nextTick } from 'vue'
 export default {
   name: 'App',
   components: {
     Map,
-    BIconList,
     BIconMap,
     BIconPlus
   },

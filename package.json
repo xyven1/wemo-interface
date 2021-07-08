@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build --modern",
+    "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "start": "nodemon -r dotenv-flow/config server.js"
   },
   "dependencies": {
+    "@mdi/font": "5.9.55",
     "axios": "^0.21.0",
     "bootstrap": "^4.5.3",
     "bootstrap-icons-vue": "^0.4.1",
@@ -19,10 +20,11 @@
     "dotenv-flow": "^3.2.0",
     "express": "^4.17.1",
     "register-service-worker": "^1.7.1",
-    "socket.io": "^3.0.4",
-    "socket.io-client": "^3.0.4",
+    "socket.io": "^4.1.2",
+    "socket.io-client": "^4.1.2",
     "vue": "^3.0.0",
     "vue3-touch-events": "^4.1.0",
+    "vuetify": "^3.0.0-alpha.0",
     "wemo-client": "^0.15.0"
   },
   "devDependencies": {
@@ -33,7 +35,10 @@
     "@vue/compiler-sfc": "^3.0.0",
     "babel-eslint": "^10.1.0",
     "eslint": "^6.7.2",
-    "eslint-plugin-vue": "^7.0.0-0"
+    "eslint-plugin-vue": "^7.0.0-0",
+    "sass": "~1.32.0",
+    "sass-loader": "^10.0.0",
+    "vue-cli-plugin-vuetify": "~2.4.1"
   },
   "eslintConfig": {
     "root": true,
@@ -54,11 +59,11 @@
     "last 2 versions",
     "not dead"
   ],
-  "type": "module",
   "nodemonConfig": {
     "ignore": [
       "devices.json",
       "svg.json"
     ]
-  }
+  },
+  "type": "module"
 }
