@@ -1,59 +1,59 @@
 <template>
-  <nav class="navbar fixed-top navbar-dark bg-dark">
-    <a class="navbar-brand">
-      {{ $refs.map?.screenName}}
-    </a>
-    <div class="navbar-right">
-      <p class="navbar-text pr-2 mb-0" v-if="duckTemp">{{duckTemp.toFixed(1)}}°F</p>
-      <button class="btn btn-info m-1" @click="bind"><BIconPlus  style="height:1.5em; width: 1.5em"/></button>
-      <button class="btn btn-info m-1" @click="allOff">All Off</button> 
-      <v-button  @click="toggleInterfaceType">
-        <v-icon v-if="mapInterface" style="height:1.5em; width: 1.5em">mdi-menu</v-icon>
-        <BIconMap v-else style="height:1.5em; width: 1.5em"/>
-      </v-button>
-    </div>
-  </nav>
-  <Map v-if="mapInterface" :switches="switches" :toggle="toggle" ref="map"/>
-  <div v-else class="bg-dark d-flex flex-column align-items-center justify-content-end justify-content-sm-start pt-2 pb-5" style="height: 100%">
-    <div v-if="!switches" class="spinner-border text-light p-2 align-self-center mb-auto mt-1">
-      <span class="sr-only">Loading...</span>
-    </div>
-    <div v-for="(sw, index) in switches" :key="index" class="p-1">
-      <button @click="toggle(sw)" class="btn btn-lg" :class="{'btn-primary': sw.state==1, 'btn-secondary': sw.state==0, 'btn-info': sw.state==2}">
-        {{sw.name}}
-      </button>
-    </div>
-  </div>
+  <v-app>
+    <v-app-bar> 
+      <v-app-bar-title>
+        <v-template v-if="mapInterface">{{ screenName }}</v-template>
+      </v-app-bar-title>
+      <v-spacer/>
+      <v-btn icon @click="bind" v-if="mapInterface"><v-icon>mdi-plus</v-icon></v-btn>
+      <v-btn icon @click="unbind" v-if="mapInterface"><v-icon>mdi-minus</v-icon></v-btn>
+      <v-btn @click="allOff">All Off</v-btn> 
+      <v-btn icon @click="toggleInterfaceType">
+        <v-icon v-if="mapInterface" style="height:1.5em; width: 1.5em">mdi-card-text-outline</v-icon>
+        <v-icon v-else style="height:1.5em; width: 1.5em">mdi-map</v-icon>
+      </v-btn>
+    </v-app-bar>
+    <v-main style="height:100%;" :style="{'overflow': mapInterface ? 'hidden' : 'auto'}" fluid > 
+      <Map v-if="mapInterface" :switches="switches" :toggle="toggle" ref="map" v-model:screenName="screenName"/>
+      <v-container v-else class="text-center d-block">
+        <v-progress-circular class="float-middle" :size="70" :width="7" v-if="!switches" indeterminate />
+        <template v-for="(sw, index) in switches?.sort((a,b) => a.name.localeCompare(b.name))" :key="index" >
+          <v-btn @click="toggle(sw)" class="ma-1" :color="({0: 'btn-secondary', 1:'primary',  2: 'btn-info'})[sw.state]">
+            {{sw.name}}
+          </v-btn>
+        </template>
+      </v-container>
+      <Dialog ref="allOff" title="Are you sure you want to turn off all the lights?" agreeText="Yes" cancelText="No"/>
+    </v-main>
+  </v-app>  
 </template>
 
 <script>
 import axios from 'axios'
-import Map from './components/Map'
-import {BIconMap, BIconPlus} from 'bootstrap-icons-vue'
-import { nextTick } from 'vue'
+import Map from './components/Map.vue'
+import Dialog from './components/Dialog.vue'
 export default {
   name: 'App',
   components: {
     Map,
-    BIconMap,
-    BIconPlus
+    Dialog
   },
   data(){
     return {
       switches: null,
       mapInterface: false,
-      duckTemp: null
+      duckTemp: null,
+      screenName: null,
     }
   },
-  async mounted(){
+  mounted(){
     var vm = this
     if(localStorage.map)
       vm.mapInterface = localStorage.map == "true"
     else
       localStorage.map = vm.mapInterface  
-    await axios.get(process.env.VUE_APP_URL+"/api").then((res)=>{
+    axios.get(process.env.VUE_APP_URL+"/api").then(res =>{
       vm.switches = res.data
-      if(vm.mapInterface) vm.$refs.map.initialize()
     })
     vm.$socket.on('stateChange', (data)=>{
       vm.switches.find(s=> s.serialNumber == data.serialNumber).state = data.state
@@ -74,13 +74,9 @@ export default {
     this.$socket.off('stateChange')
   },
   methods: {
-    async toggleInterfaceType(){ //toggles interface, manages localStorage, and runs intialization function when switching to map
+    toggleInterfaceType(){ //toggles interface, manages localStorage, and runs initialization function when switching to map
       var vm = this
       vm.mapInterface = !vm.mapInterface
-      if(vm.mapInterface){
-        await nextTick()
-        vm.$refs.map.initialize()
-      }
       localStorage.map = vm.mapInterface
     },
     async toggle(sw){ //toggles a switch, updates switches array accordingly
@@ -91,33 +87,30 @@ export default {
           sw.state = parseInt(res.data.BinaryState)
       })
     },
-    allOff(){ //turns all switches off, with confirmation
+    async allOff(){ //turns all switches off, with confirmation
       var vm = this
-      if(confirm("Are you sure you want to turn off all the lights?"))
+      if(await vm.$refs.allOff.show())
         vm.switches.forEach(sw => {
           if(sw.state ==1)
             vm.toggle(sw)
         })
     },
     bind(){
-      var vm = this
-      if(vm.$refs.map)
-        vm.$refs.map.associateNewSwitches()
+      this.$refs.map?.associatePrompt()
+    },
+    unbind(){
+      this.$refs.map?.dissociatePrompt()
     }
   }
 }
 </script>
 
 <style>
-@import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
-#app, html, body {
-  height:100%;
-}
-body{
-  padding-top: 54px;
-}
-.btn:focus, .btn:active{
-  outline: none !important;
-  box-shadow: none !important;
+@import url('https://fonts.googleapis.com/css?family=Raleway');
+html, body, #app{
+  height: 100%;
+  font-family: 'Raleway', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 </style>

@@ -11,8 +11,6 @@
   "dependencies": {
     "@mdi/font": "5.9.55",
     "axios": "^0.21.0",
-    "bootstrap": "^4.5.3",
-    "bootstrap-icons-vue": "^0.4.1",
     "core-js": "^3.6.5",
     "cors": "^2.8.5",
     "debounce": "^1.2.0",
@@ -23,8 +21,7 @@
     "socket.io": "^4.1.2",
     "socket.io-client": "^4.1.2",
     "vue": "^3.0.0",
-    "vue3-touch-events": "^4.1.0",
-    "vuetify": "^3.0.0-alpha.0",
+    "vuetify": "^3.0.0-alpha.9",
     "wemo-client": "^0.15.0"
   },
   "devDependencies": {

@@ -1,11 +1,14 @@
 <template>
-  <transition v-touch:swipe="swipeHandler" class="div-slider" :name="back? 'slideback' : 'slide'">
-    <svg class="bg-dark svg" viewBox="0 0 295 515" :key="screen">
-      <image v-if="regions?.[screen].background" width="295" height="515" x="0" y="0" :xlink:href="require(`../assets/${regions[screen].background.name}`)"/> 
-      <path v-for="(region, index) in regions?.[screen].regions" :key="index" :d="region.d" @click="selecting ? event.emit('selection', region) : toggle(region.sw)"
+  <transition v-touch="{left: () => swipeHandler('left'), right: () => swipeHandler('right')}" class="div-slider" :name="back? 'slideback' : 'slide'">
+    <svg viewBox="0 0 295 515" :key="screen">
+      <image v-if="svg?.[screen].background" width="295" height="515" x="0" y="0" :xlink:href="require(`../assets/${svg[screen].background.name}`)"/> 
+      <path v-for="(region, index) in svg?.[screen].regions" :key="index" :d="region.d" @click="selecting ? event.emit('selection', region) : toggle(region.sw)"
         style="cursor: pointer;"
         :style="{
-          fill: ({ 
+          fill: selecting ? 
+            region.sn ? '#FC8C00'
+              : '#707070'
+          :({ 
             0: '#DDDDDD',
             1: '#FFD300',
             2: '#17a2b8',
@@ -19,81 +22,106 @@
     </svg>
   </transition>
   <div class="overlay">
-    <div class="row align-items-center" style="height:100%; margin: 0;" >
-      <div class="col d-none d-sm-block" >
-        <BIconCaretLeft class="icon" @click="prev" v-if="screen>0"/>
-      </div>
-      <div class="col d-flex justify-content-center">
-        <div v-if="!switches" class="spinner-border text-light p-2 mb-auto">
-          <span class="sr-only">Loading...</span>
-        </div>
-      </div>
-      <div class="col d-none d-sm-block">
-        <BIconCaretRight class="icon float-right" @click="next" v-if="screen<regions?.length-1"/>
-      </div>
-    </div>
+    <v-row class="row" align="center" style="height:100%; margin: 0;">
+      <v-col>
+        <v-btn v-show="screen>0  && !mobile" icon class="interactable" @click="prev">
+          <v-icon size="x-large">mdi-chevron-left</v-icon>
+        </v-btn>
+      </v-col>
+      <v-col class="text-center">
+        <v-progress-circular class="float-middle" :size="70" :width="7" v-if="!switches" indeterminate />
+      </v-col>
+      <v-col>
+        <v-btn v-show="screen<svg?.length-1 && !mobile" @click="next" icon class="interactable float-right">
+          <v-icon size="x-large">mdi-chevron-right</v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
   </div>
+  <Dialog ref="addDialog" agreeText="Continue" title="Choose Switch To Associate" :maxWidth="500" @cancel="selectedSwitch = null" @agree="associateSwitch(selectedSwitch); selectedSwitch = null; ">
+    <template v-slot:body>
+      <div class="text-center">
+        <v-btn class="ma-1" :color="selectedSwitch == sw ? 'primary' : ''" variant="outlined" v-for="sw in switches.filter(sw=>!svg.flatMap(r=>r.regions).find(r=>r.sn == sw.serialNumber))" :key="sw" @click="selectedSwitch = sw">
+          {{sw.name}}
+        </v-btn>
+      </div>
+    </template>
+  </Dialog>
+  <Dialog ref="removeDialog" agreeText="Continue" title="Dissociate Region" message="Select a region to clear" @agree="dissociateSwitch"/>
 </template>
 <script>
 import axios from 'axios'
+import Dialog from '../components/Dialog'
 import { EventEmitter, once } from 'events'
-import { BIconCaretRight, BIconCaretLeft} from 'bootstrap-icons-vue'
+import { useDisplay } from 'vuetify/lib/composables/display'
 export default {
   components: {
-    BIconCaretRight,
-    BIconCaretLeft
+    Dialog,
   },
   props: {
     toggle: Function,
-    switches: Array
+    switches: Array,
+    screenName: String,
   },
   data(){
     return {
-      regions: null,
+      svg: null,
       selecting: false,
       event: null,
       back: false,
       screen: 1,
+      selectedSwitch: null,
     }
   },
-  mounted(){
+  async mounted(){
     var vm = this
     if(localStorage.screen) vm.screen = parseInt(localStorage.screen)
     else localStorage.screen = vm.screen
     vm.event = new EventEmitter()
+    axios.get(process.env.VUE_APP_URL+"/api/svg").then(res=>{vm.svg = res.data; if(vm.switches) vm.initialize()})
   },
   methods:{
     getSwitch(sn){
       return this.switches.find(s => s.serialNumber == sn) || null
     },
-    async initialize(){ //gets region data from server
-      console.log("getting regions...")
+    initialize(){ //associates regions with switches
+      console.log("intializing state...")
       var vm = this
-      await axios.get(process.env.VUE_APP_URL+"/api/svg").then((res)=>{
-        vm.regions = res.data.map(g=>{
-          g.regions = g.regions.map(s=>{
-            s.sw = vm.getSwitch(s.sn)
-            return s
-          })
-          return g
+      vm.svg.forEach(r=>{
+        r.regions.forEach(s=>{
+          s.sw = vm.getSwitch(s.sn)
         })
       })
+      vm.$emit('update:screenName', vm.svg?.[vm.screen].name)
     },
-    async associateNewSwitches(){ //alerts client to un associated switches, and prompts a selection
+    associatePrompt(){
+      this.$refs.addDialog.show()
+    },
+    dissociatePrompt(){
+      this.$refs.removeDialog.show()
+    },
+    async associateSwitch(sw){ //alerts client to un associated switches, and prompts a selection
       var vm = this
       vm.selecting = true
-      for(var sw of vm.switches){
-        if(!vm.regions.flatMap(r=>r.regions).find(r=>r.sn == sw.serialNumber)){
-          alert('Switch "' + sw.name + '" not associated with region. Click OK then select a region')
-          vm.event.on('selection', (region)=>{
-            region.sw = sw
-            region.sn = sw.serialNumber
-            axios.post(process.env.VUE_APP_URL+"/api/svg", region,)
-          })
-          await once(vm.event, 'selection')
-          vm.event.removeAllListeners('selection')
-        }
-      }
+      vm.event.on('selection', (region)=>{
+        region.sw = sw
+        region.sn = sw.serialNumber
+        axios.post(process.env.VUE_APP_URL+"/api/svg", region)
+      })
+      await once(vm.event, 'selection')
+      vm.event.removeAllListeners('selection')
+      vm.selecting = false
+    },
+    async dissociateSwitch(){
+      var vm = this
+      vm.selecting = true
+      vm.event.on('selection', (region)=>{
+        delete region.sw
+        region.sn = ""
+        axios.post(process.env.VUE_APP_URL+"/api/svg", region)
+      })
+      await once(vm.event, 'selection')
+      vm.event.removeAllListeners('selection')
       vm.selecting = false
     },
     swipeHandler(dir){
@@ -101,9 +129,10 @@ export default {
       console.log(dir)
       if(dir == 'left') vm.next()
       if(dir == 'right') vm.prev()
-    },next(){
+    },
+    next(){
       this.back = false;
-      this.screen += this.screen < this.regions.length-1;
+      this.screen += this.screen < this.svg.length-1;
     },
     prev(){
       this.back = true;
@@ -111,35 +140,37 @@ export default {
     }
   },
   computed: {
-    screenName: function () {
-      return this.regions?.[this.screen].name
+    mobile: function () {
+      return useDisplay().mobile.value
     }
   },
   watch: {
-    screen: function (n){ localStorage.screen = n }
+    screen: function (n){
+      localStorage.screen = n;
+      this.$emit('update:screenName', this.svg?.[n].name)  
+    },
+    switches: function (){
+      this.initialize()
+    }
   }
 }
 </script>
 <style>
-#app{
-  overflow: hidden;
-}
 .slide-enter-active,
 .slide-leave-active,
 .slideback-enter-active,
 .slideback-leave-active {
-  position: absolute;
+  position: absolute !important;
   transition: .25s;
 }
-.icon {
-  height: 3em;
-  width: 3em;
-  border-radius: 4px;
-  background-color: #00000033;
-  fill: lightgrey;
-  cursor: pointer;
-  pointer-events:all;
+
+.div-slider{
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
 }
+
 .overlay{
   position:absolute;
   pointer-events: none;
@@ -148,11 +179,13 @@ export default {
   width: 100%;
   height: 100%;
 }
-
+.overlay .interactable{
+  cursor: pointer;
+  pointer-events:all;
+}
 .slide-enter-to,
 .slideback-enter-to {
   right: 0;
-  top: -100%;
 }
 .slide-leave-from,
 .slideback-leave-from  {
@@ -160,22 +193,15 @@ export default {
 }
 .slide-enter-from {
   right: -100%;
-  top: -100%;
 }
 .slide-leave-to {
   left: -100%;
 }
 .slideback-enter-from {
   right: 100%;
-  top: -100%;
 }
 .slideback-leave-to {
   left: 100%;
 }
 
-.div-slider{
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
 </style>
