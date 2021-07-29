@@ -25,7 +25,7 @@
       </v-container>
       <Dialog ref="allOff" title="Are you sure you want to turn off all the lights?" agreeText="Yes" cancelText="No"/>
     </v-main>
-  </v-app>  
+  </v-app>
 </template>
 
 <script>

@@ -69,7 +69,9 @@ app.post('/api', (req, res) => {
     })
   })
 })
-
+app.post('/api/tv', (req, res) => {
+  axios.post('http://10.200.10.35', req.body).then(res)
+})
 //returns parsed array containing data for svg, containing associations between map regions and serial number of switch
 app.get('/api/svg', (req, res) => {
   fs.readFile('./svg.json', (err,data)=>{

@@ -1,9 +1,9 @@
 <template>
-  <transition v-touch="{left: () => swipeHandler('left'), right: () => swipeHandler('right')}" class="div-slider" :name="back? 'slideback' : 'slide'">
+  <transition @wheel="onScroll" v-touch="{left: () => swipeHandler('left'), right: () => swipeHandler('right')}" class="div-slider" :name="back? 'slideback' : 'slide'">
     <svg viewBox="0 0 295 515" :key="screen">
       <image v-if="svg?.[screen].background" width="295" height="515" x="0" y="0" :xlink:href="require(`../assets/${svg[screen].background.name}`)"/> 
       <path v-for="(region, index) in svg?.[screen].regions" :key="index" :d="region.d" @click="selecting ? event.emit('selection', region) : toggle(region.sw)"
-        style="cursor: pointer;"
+        style="cursor: pointer; stroke: transparent"
         :style="{
           fill: selecting ? 
             region.sn ? '#FC8C00'
@@ -13,7 +13,8 @@
             1: '#FFD300',
             2: '#17a2b8',
             'Error': 'FF0000'
-          })[region.sw?.state] || '#707070'
+          })[region.sw?.state] || '#707070',
+          'stroke-width': region.stroke??0,
         }">
         <title>
           {{region.title}}
@@ -23,7 +24,7 @@
   </transition>
   <div class="overlay">
     <v-row class="row" align="center" style="height:100%; margin: 0;">
-      <v-col>
+      <v-col cols="1">
         <v-btn v-show="screen>0  && !mobile" icon class="interactable" @click="prev">
           <v-icon size="x-large">mdi-chevron-left</v-icon>
         </v-btn>
@@ -31,7 +32,7 @@
       <v-col class="text-center">
         <v-progress-circular class="float-middle" :size="70" :width="7" v-if="!switches" indeterminate />
       </v-col>
-      <v-col>
+      <v-col cols="1">
         <v-btn v-show="screen<svg?.length-1 && !mobile" @click="next" icon class="interactable float-right">
           <v-icon size="x-large">mdi-chevron-right</v-icon>
         </v-btn>
@@ -40,7 +41,7 @@
   </div>
   <Dialog ref="addDialog" agreeText="Continue" title="Choose Switch To Associate" :maxWidth="500" @cancel="selectedSwitch = null" @agree="associateSwitch(selectedSwitch); selectedSwitch = null; ">
     <template v-slot:body>
-      <div class="text-center">
+      <div class="text-center ma-2">
         <v-btn class="ma-1" :color="selectedSwitch == sw ? 'primary' : ''" variant="outlined" v-for="sw in switches.filter(sw=>!svg.flatMap(r=>r.regions).find(r=>r.sn == sw.serialNumber))" :key="sw" @click="selectedSwitch = sw">
           {{sw.name}}
         </v-btn>
@@ -71,6 +72,7 @@ export default {
       back: false,
       screen: 1,
       selectedSwitch: null,
+      timeOut: null,
     }
   },
   async mounted(){
@@ -83,6 +85,14 @@ export default {
   methods:{
     getSwitch(sn){
       return this.switches.find(s => s.serialNumber == sn) || null
+    },
+    onScroll(e){
+      var vm = this
+      if(!vm.timeOut){
+        if(e.deltaY < 0) vm.next()
+        else vm.prev()
+        vm.timeOut = setTimeout(()=>vm.timeOut = null, 250)
+      }
     },
     initialize(){ //associates regions with switches
       console.log("intializing state...")
@@ -203,5 +213,4 @@ export default {
 .slideback-leave-to {
   left: 100%;
 }
-
 </style>
