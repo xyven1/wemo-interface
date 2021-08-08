@@ -38,45 +38,52 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(path.resolve(), '/dist/index.html'))
 })
 
-//returns list of switches
-app.get('/api', async (req, res) => {
-  console.log('Getting state of switches')
-  await Promise.all(Object.entries(devices).map(([sn,d]) => {
-    return Promise.race([
-      new Promise((resolve) =>{
-        d.getBinaryState((err, state) =>{
-          resolve({
-            name: d.device.friendlyName,
-            serialNumber: sn,
-            state: state
-          })
-        })
-      }),
-      new Promise(res=> setTimeout(res, 2000))
-    ])
-  })).then((values)=>res.send(values.filter(v=>v!=null)))
+//returns switches from devices object
+app.get('/api/switches', (req, res) => {
+  res.send(Object.entries(devices).map(([, device]) => ({
+    name: device.device.friendlyName,
+    serialNumber: device.device.serialNumber
+  })))
 })
 
-//allows client to toggle switches using serial number
-app.post('/api', (req, res) => {
-  console.log(req.body)
-  io.emit('stateChange', {serialNumber: req.body.serialNumber, state: 2})
-  let device = devices[req.body.serialNumber]
-  device.getBinaryState((err, state) =>{
-    console.log("Toggling", device.device.friendlyName, state == 1 ? "Off" : "On")
-    device.setBinaryState(state == 1 ? 0 : 1, (err, result)=>{
-      res.send(result)
-    })
-  })
-})
-app.post('/api/tv', (req, res) => {
-  axios.post('http://10.200.10.35', req.body).then(res)
-})
 //returns parsed array containing data for svg, containing associations between map regions and serial number of switch
 app.get('/api/svg', (req, res) => {
   fs.readFile('./svg.json', (err,data)=>{
     res.send(JSON.parse(data))
   })
+})
+
+//returns the state of a switch given a serial number
+app.get('/api/switch/:serialNumber', async (req, res) => {
+  console.log('Getting state of switch with serial number: ' + req.params.serialNumber)
+  let device = devices[req.params.serialNumber]
+  if(device)
+    device.getBinaryState((err, state) =>{
+      if(err) return res.send(err)
+      res.send({
+        name: device.device.friendlyName,
+        serialNumber: req.params.serialNumber,
+        state: state
+      })
+    })
+  else res.send("")
+})
+
+//allows client to toggle switches using serial number
+app.post('/api/switch/:serialNumber', (req, res) => {
+  console.log('Toggling switch with serial number: ' + req.params.serialNumber)
+  io.emit('stateChange', {serialNumber: req.params.serialNumber, state: 2})
+  let device = devices[req.params.serialNumber]
+  if(device)
+  device.getBinaryState((err, state) =>{
+      console.log("Toggling", device.device.friendlyName, state == 1 ? "Off" : "On")
+      device.setBinaryState(state == 1 ? 0 : 1, (err, result)=>{
+        res.send(result)
+      })
+    })
+})
+app.post('/api/tv', (req, res) => {
+  axios.post('http://10.200.10.35', req.body).then(res)
 })
 
 //allows client to change serial number associated to a region
@@ -112,6 +119,7 @@ function manageClient(deviceInfo){
   })
 
   client.on('binaryState', value =>{
+    console.log('statechange', client.device.friendlyName, value)
     io.emit('stateChange', {serialNumber: client.device.serialNumber, state: parseInt(value)})
   })
 }

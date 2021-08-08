@@ -39,6 +39,10 @@
         type: Number,
         default: 300,
       },
+      agreeCondition: {
+        type: Boolean,
+        default: true,
+      }
     },
     methods: {
       show() {
@@ -47,6 +51,7 @@
         return new Promise(res => vm.resolve = res);
       },
       agree() {
+        if(this.agreeCondition === false) return
         this.resolve(true)
         this.$emit("agree")
         this.dialog = false

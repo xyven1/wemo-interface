@@ -7,13 +7,13 @@
         :style="{
           fill: selecting ? 
             region.sn ? '#FC8C00'
-              : '#707070'
+              : 'rgb(var(--v-theme-secondary))'
           :({ 
             0: '#DDDDDD',
-            1: '#FFD300',
-            2: '#17a2b8',
-            'Error': 'FF0000'
-          })[region.sw?.state] || '#707070',
+            1: 'rgb(var(--v-theme-tertiary))',
+            2: 'rgb(var(--v-theme-info))',
+            'Error': 'rgb(var(--v-theme-error))'
+          })[region.sw?.state] || 'rgb(var(--v-theme-secondary))',
           'stroke-width': region.stroke??0,
         }">
         <title>
@@ -30,7 +30,6 @@
         </v-btn>
       </v-col>
       <v-col class="text-center">
-        <v-progress-circular class="float-middle" :size="70" :width="7" v-if="!switches" indeterminate />
       </v-col>
       <v-col cols="1">
         <v-btn v-show="screen<svg?.length-1 && !mobile" @click="next" icon class="interactable float-right">
@@ -39,10 +38,10 @@
       </v-col>
     </v-row>
   </div>
-  <Dialog ref="addDialog" agreeText="Continue" title="Choose Switch To Associate" :maxWidth="500" @cancel="selectedSwitch = null" @agree="associateSwitch(selectedSwitch); selectedSwitch = null; ">
+  <Dialog ref="addDialog" :agreeCondition="selectedSwitch!=null" agreeText="Continue" title="Choose Switch To Associate" :maxWidth="500" @cancel="selectedSwitch = null" @agree="associateSwitch(selectedSwitch); selectedSwitch = null; ">
     <template v-slot:body>
       <div class="text-center ma-2">
-        <v-btn class="ma-1" :color="selectedSwitch == sw ? 'primary' : ''" variant="outlined" v-for="sw in switches.filter(sw=>!svg.flatMap(r=>r.regions).find(r=>r.sn == sw.serialNumber))" :key="sw" @click="selectedSwitch = sw">
+        <v-btn class="ma-1" :color="selectedSwitch == sw ? 'primary' : ''" variant="outlined" v-for="sw in [].filter(sw=>!svg.flatMap(screen=>screen.regions).find(screen=>screen.sn == sw.serialNumber))" :key="sw" @click="selectedSwitch = sw">
           {{sw.name}}
         </v-btn>
       </div>
@@ -54,14 +53,13 @@
 import axios from 'axios'
 import Dialog from '../components/Dialog'
 import { EventEmitter, once } from 'events'
+import { toggle } from '../utils/switch.js'
 import { useDisplay } from 'vuetify/lib/composables/display'
 export default {
   components: {
     Dialog,
   },
   props: {
-    toggle: Function,
-    switches: Array,
     screenName: String,
   },
   data(){
@@ -80,11 +78,22 @@ export default {
     if(localStorage.screen) vm.screen = parseInt(localStorage.screen)
     else localStorage.screen = vm.screen
     vm.event = new EventEmitter()
-    axios.get(process.env.VUE_APP_URL+"/api/svg").then(res=>{vm.svg = res.data; if(vm.switches) vm.initialize()})
+    axios.get(process.env.VUE_APP_URL+"/api/svg").then(res=>{
+      vm.svg = res.data;
+      vm.initialize()
+    })
+    vm.$socket.on('stateChange', (data)=>{
+      var sw = vm.svg.flatMap(screen=>screen.regions).map(region=>region.sw).find(s=> s?.serialNumber == data.serialNumber)
+      if(sw) sw.state = data.state
+    })
   },
   methods:{
-    getSwitch(sn){
-      return this.switches.find(s => s.serialNumber == sn) || null
+    toggle,
+    async getSwitch(s){
+      if(s.sn)
+        axios.get(process.env.VUE_APP_URL+"/api/switch/"+s.sn).then(res=>{
+          s.sw = res.data
+        }).catch(err=>{return err})
     },
     onScroll(e){
       var vm = this
@@ -97,9 +106,9 @@ export default {
     initialize(){ //associates regions with switches
       console.log("intializing state...")
       var vm = this
-      vm.svg.forEach(r=>{
-        r.regions.forEach(s=>{
-          s.sw = vm.getSwitch(s.sn)
+      vm.svg.forEach(screen=>{
+        screen.regions.forEach(s=>{
+          vm.getSwitch(s)
         })
       })
       vm.$emit('update:screenName', vm.svg?.[vm.screen].name)
@@ -158,9 +167,6 @@ export default {
     screen: function (n){
       localStorage.screen = n;
       this.$emit('update:screenName', this.svg?.[n].name)  
-    },
-    switches: function (){
-      this.initialize()
     }
   }
 }
