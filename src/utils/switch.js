@@ -1,15 +1,14 @@
-import axios from 'axios'
 /**
  * Toggles a switch, updates switches array accordingly
- * @param {string} sw - The serial number of the switch to toggle
+ * @param socket - socket.io connection
+ * @param {string} sn - The serial number of the switch to toggle
+ * @param {object} sw - The new state of the switch
+ * @returns {undefined}
  */
-async function toggle(sw){
-  await axios.post(process.env.VUE_APP_URL+'/api/switch/'+sw.serialNumber).then((res)=>{
-    if(res.data.BinaryState == 'Error')
-      sw.state = 'Error'
-    else
-      sw.state = parseInt(res.data.BinaryState)
-    return 'Finished'
+async function toggle(socket, sn, sw){
+  socket.emit('toggleSwitch', sn, res => {
+    if(sw?.state)
+      sw.state = res.BinaryState == 'Error' ? 'Error' : parseInt(res.BinaryState)
   })
 }
 

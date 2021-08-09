@@ -3,7 +3,6 @@ import cors from 'cors'
 import compression from 'compression'
 import path from 'path'
 import http from 'http'
-import bodyParser from 'body-parser'
 import fs from 'fs'
 import Wemo from 'wemo-client'
 import { Server } from "socket.io"
@@ -19,7 +18,7 @@ const wemo = new Wemo({
   discover_opts: {
     explicitSocketBind: true,
   }
-});
+})
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -30,69 +29,11 @@ const io = new Server(server, {
 //middleware
 app.use(cors())
 app.use(compression())
-app.use(bodyParser.json())
 app.use(express.static('dist'))
 
 //serves static files in dist
 app.get('/', (req, res) => {
   res.sendFile(path.join(path.resolve(), '/dist/index.html'))
-})
-
-//returns switches from devices object
-app.get('/api/switches', (req, res) => {
-  res.send(Object.entries(devices).map(([, device]) => ({
-    name: device.device.friendlyName,
-    serialNumber: device.device.serialNumber
-  })))
-})
-
-//returns parsed array containing data for svg, containing associations between map regions and serial number of switch
-app.get('/api/svg', (req, res) => {
-  fs.readFile('./svg.json', (err,data)=>{
-    res.send(JSON.parse(data))
-  })
-})
-
-//returns the state of a switch given a serial number
-app.get('/api/switch/:serialNumber', async (req, res) => {
-  console.log('Getting state of switch with serial number: ' + req.params.serialNumber)
-  let device = devices[req.params.serialNumber]
-  if(device)
-    device.getBinaryState((err, state) =>{
-      if(err) return res.send(err)
-      res.send({
-        name: device.device.friendlyName,
-        serialNumber: req.params.serialNumber,
-        state: state
-      })
-    })
-  else res.send("")
-})
-
-//allows client to toggle switches using serial number
-app.post('/api/switch/:serialNumber', (req, res) => {
-  console.log('Toggling switch with serial number: ' + req.params.serialNumber)
-  io.emit('stateChange', {serialNumber: req.params.serialNumber, state: 2})
-  let device = devices[req.params.serialNumber]
-  if(device)
-  device.getBinaryState((err, state) =>{
-      console.log("Toggling", device.device.friendlyName, state == 1 ? "Off" : "On")
-      device.setBinaryState(state == 1 ? 0 : 1, (err, result)=>{
-        res.send(result)
-      })
-    })
-})
-app.post('/api/tv', (req, res) => {
-  axios.post('http://10.200.10.35', req.body).then(res)
-})
-
-//allows client to change serial number associated to a region
-app.post('/api/svg', (req, res) => {
-  fs.readFile('./svg.json', (err,data)=>{
-    var parsed = JSON.parse(data)
-    parsed.flatMap(r=>r.regions).find(r=>r.d == req.body.d).sn = req.body.sn
-    fs.writeFile('./svg.json', JSON.stringify(parsed,null, 2), (err)=>{if(err) console.log(err); res.send("file edited")})
-  })
 })
 
 //sync devices loaded onto server with devices stored on file
@@ -151,12 +92,80 @@ function loadDevices(){
   })
 }
 
+//web socket
 io.on('connection', (socket) => {
-  console.log('a user connected:', socket.id);
+  console.log('a user connected:', socket.id)
   socket.on('disconnect', (reason) => {
     console.log('disconnecting:', socket.id, "because: ", reason)
-  });
-});
+  })
+  //returns switches from devices object to a callback function
+  socket.on('getSwitches', (callback) => {
+    console.log('getting switches')
+    callback(Object.entries(devices).map(([, device]) => ({
+      name: device.device.friendlyName,
+      serialNumber: device.device.serialNumber
+    })))
+  })
+
+  //returns parsed array containing data for svg, containing associations between map regions and serial number of switch
+  socket.on('getSvg', (callback) => {
+    console.log('getting svg')
+    fs.readFile('./svg.json', (err,data)=>{
+      callback(JSON.parse(data))
+    })
+  })
+
+  //returns the state of a switch given a serial number
+  socket.on('getSwitch', (serialNumber, callback) => {
+    console.log('getting switch state:', serialNumber)
+    let device = devices[serialNumber]
+    if(device)
+      device.getBinaryState((err, state) =>{
+        if(err) return callback({status: 'error', err})
+        callback({
+          name: device.device.friendlyName,
+          serialNumber: serialNumber,
+          state: state
+        })
+      })
+    else callback("device not found:" + serialNumber)
+  })
+
+  //allows client to toggle switches using serial number
+  socket.on('toggleSwitch', (serialNumber, callback) => {
+    console.log('Toggling switch with serial number: ' + serialNumber)
+    io.emit('stateChange', {serialNumber: serialNumber, state: 2})
+    let device = devices[serialNumber]
+    if(device)
+      device.getBinaryState((err, state) =>{
+        if(err) return callback(err)
+        device.setBinaryState(state == 1 ? 0 : 1, (err, result)=>{
+          if(err) return callback(err)
+          callback(result)
+        })
+      }
+    )
+    else callback("Device not found")
+  })
+
+  //allows client to change serial number associated to a region
+  socket.on('setSvg', (data, callback) => {
+    console.log('setting svg')
+    fs.readFile('./svg.json', (err,data)=>{
+      var parsed = JSON.parse(data)
+      parsed.flatMap(r=>r.regions).find(r=>r.d == data.d).sn = data.sn
+      fs.writeFile('./svg.json', JSON.stringify(parsed,null, 2), (err)=>{
+        if(err) console.log(err)
+        callback(data)
+      })
+    })
+  })
+
+  //send command to tv
+  socket.on('tv', (data, callback) => {
+    axios.post('http://localhost:3000/tv', data).then(res => callback(res))
+  })
+})
 
 //load all stored devices
 loadDevices()
@@ -168,11 +177,3 @@ server.listen(process.env.SERVER_PORT, () => {
 
 //repeated discover run every 10 seconds
 setInterval(discover, 10000)
-setInterval(()=>{ //maganage duck heat
-  var d = devices['221814K0102A85']
-  axios.get('http://10.200.10.13').then((res)=>{
-    if(res.data.sensor>80) d.setBinaryState(0)
-    if(res.data.sensor<75) d.setBinaryState(1)
-    io.emit('duckTemp', res.data)
-  }).catch(()=>{})
-}, 1e3)

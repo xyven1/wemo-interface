@@ -6,7 +6,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "start": "nodemon -r dotenv-flow/config server.js --node-env=development"
+    "start": "node -r dotenv-flow/config server.js",
+    "dev": "nodemon --exec npm start"
   },
   "dependencies": {
     "@mdi/font": "5.9.55",
@@ -25,6 +26,7 @@
     "wemo-client": "^0.15.0"
   },
   "devDependencies": {
+    "@beyonk/google-fonts-webpack-plugin": "^1.7.0",
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-plugin-eslint": "~4.5.0",
     "@vue/cli-plugin-pwa": "~4.5.0",
@@ -33,6 +35,7 @@
     "babel-eslint": "^10.1.0",
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^7.0.0-0",
+    "nodemon": "^2.0.12",
     "sass": "~1.32.0",
     "sass-loader": "^10.0.0",
     "vue-cli-plugin-vuetify": "~2.4.1"
@@ -57,10 +60,12 @@
     "not dead"
   ],
   "nodemonConfig": {
-    "ignore": [
-      "devices.json",
-      "svg.json"
-    ]
+    "watch": [
+      "server.js"
+    ],
+    "env": {
+      "NODE_ENV": "development"
+    }
   },
   "type": "module"
 }

@@ -9,7 +9,6 @@
   </v-container>
 </template>
 <script>
-import axios from 'axios'
 import { toggle } from '../utils/switch.js'
 export default {
   data () {
@@ -19,9 +18,7 @@ export default {
   },
   mounted(){
     var vm = this
-    axios.get(process.env.VUE_APP_URL+"/api/switches").then(res =>{
-      vm.switches = res.data
-    })
+    vm.$socket.emit("getSwitches", res => vm.switches = res)
     vm.$socket.on('stateChange', (data)=>{
       var sw = vm.switches.find(s=> s.serialNumber == data.serialNumber)
       if(sw) sw.state = data.state

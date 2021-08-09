@@ -1,8 +1,8 @@
 <template>
-  <transition @wheel="onScroll" v-touch="{left: () => swipeHandler('left'), right: () => swipeHandler('right')}" class="div-slider" :name="back? 'slideback' : 'slide'">
+  <transition @wheel.passive="onScroll" v-touch="{left: () => swipeHandler('left'), right: () => swipeHandler('right')}" class="div-slider" :name="back? 'slideback' : 'slide'">
     <svg viewBox="0 0 295 515" :key="screen">
       <image v-if="svg?.[screen].background" width="295" height="515" x="0" y="0" :xlink:href="require(`../assets/${svg[screen].background.name}`)"/> 
-      <path v-for="(region, index) in svg?.[screen].regions" :key="index" :d="region.d" @click="selecting ? event.emit('selection', region) : toggle(region.sw)"
+      <path v-for="(region, index) in svg?.[screen].regions" :key="index" :d="region.d" @click="selecting ? event.emit('selection', region) : toggle($socket, region.sn, region.sw)"
         style="cursor: pointer; stroke: transparent"
         :style="{
           fill: selecting ? 
@@ -50,7 +50,6 @@
   <Dialog ref="removeDialog" agreeText="Continue" title="Dissociate Region" message="Select a region to clear" @agree="dissociateSwitch"/>
 </template>
 <script>
-import axios from 'axios'
 import Dialog from '../components/Dialog'
 import { EventEmitter, once } from 'events'
 import { toggle } from '../utils/switch.js'
@@ -78,8 +77,8 @@ export default {
     if(localStorage.screen) vm.screen = parseInt(localStorage.screen)
     else localStorage.screen = vm.screen
     vm.event = new EventEmitter()
-    axios.get(process.env.VUE_APP_URL+"/api/svg").then(res=>{
-      vm.svg = res.data;
+    vm.$socket.emit("getSvg", res=>{
+      vm.svg = res
       vm.initialize()
     })
     vm.$socket.on('stateChange', (data)=>{
@@ -90,10 +89,12 @@ export default {
   methods:{
     toggle,
     async getSwitch(s){
+      var vm = this
       if(s.sn)
-        axios.get(process.env.VUE_APP_URL+"/api/switch/"+s.sn).then(res=>{
-          s.sw = res.data
-        }).catch(err=>{return err})
+        vm.$socket.emit("getSwitch", s.sn, res=>{
+          console.log(res)
+          s.sw = res
+        })
     },
     onScroll(e){
       var vm = this
@@ -125,7 +126,7 @@ export default {
       vm.event.on('selection', (region)=>{
         region.sw = sw
         region.sn = sw.serialNumber
-        axios.post(process.env.VUE_APP_URL+"/api/svg", region)
+        vm.$socket.emit('setSvg', region)
       })
       await once(vm.event, 'selection')
       vm.event.removeAllListeners('selection')
@@ -137,7 +138,7 @@ export default {
       vm.event.on('selection', (region)=>{
         delete region.sw
         region.sn = ""
-        axios.post(process.env.VUE_APP_URL+"/api/svg", region)
+        vm.$socket.emit('setSvg', region)
       })
       await once(vm.event, 'selection')
       vm.event.removeAllListeners('selection')

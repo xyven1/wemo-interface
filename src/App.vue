@@ -76,7 +76,6 @@ export default {
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css?family=Raleway');
 html, body, #app{
   height: 100%;
   font-family: 'Raleway', sans-serif;
