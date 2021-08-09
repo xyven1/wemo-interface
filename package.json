@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "build": "vue-cli-service build --modern",
     "lint": "vue-cli-service lint",
     "start": "node -r dotenv-flow/config server.js",
     "dev": "nodemon --exec npm start"
@@ -38,7 +38,8 @@
     "nodemon": "^2.0.12",
     "sass": "~1.32.0",
     "sass-loader": "^10.0.0",
-    "vue-cli-plugin-vuetify": "~2.4.1"
+    "vue-cli-plugin-vuetify": "~2.4.1",
+    "vue-cli-plugin-webpack-bundle-analyzer": "^4.0.0"
   },
   "eslintConfig": {
     "root": true,
