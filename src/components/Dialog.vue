@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="dialog" persistent @keydown.esc="cancel">
+  <v-dialog v-model="dialog" persistent @keydown.esc="cancel" @keydown.enter="agree">
     <v-card :max-width="maxWidth">
       <v-card-title class="justify-center text-center">{{title}}</v-card-title>
       <v-card-text v-if="message">
