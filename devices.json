@@ -142,5 +142,17 @@
     "serialNumber": "221820K130105F",
     "ip": "10.200.10.230",
     "port": "49154"
+  },
+  {
+    "name": "Downstairs Bedroom",
+    "serialNumber": "M1CAA129N014E7",
+    "ip": "10.200.10.174",
+    "port": "49153"
+  },
+  {
+    "name": "Downstairs Back Hall",
+    "serialNumber": "M1CAA129N012DB",
+    "ip": "10.200.10.168",
+    "port": "49153"
   }
 ]

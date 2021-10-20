@@ -42,12 +42,17 @@
       agreeCondition: {
         type: Boolean,
         default: true,
-      }
+      },
+      onShow: {
+        type: Function,
+        default: () => {},
+      },
     },
     methods: {
       show() {
         var vm = this
         vm.dialog = true
+        vm.onShow()
         return new Promise(res => vm.resolve = res);
       },
       agree() {

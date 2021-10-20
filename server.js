@@ -116,7 +116,7 @@ io.on('connection', (socket) => {
   })
 
   //returns the state of a switch given a serial number
-  socket.on('getSwitch', (serialNumber, callback) => {
+  const getSwitch  = (serialNumber, callback) => {
     console.log('getting switch state:', serialNumber)
     let device = devices[serialNumber]
     if(device)
@@ -129,7 +129,8 @@ io.on('connection', (socket) => {
         })
       })
     else callback("device not found:" + serialNumber)
-  })
+  }
+  socket.on('getSwitch', getSwitch)
 
   //allows client to toggle switches using serial number
   socket.on('toggleSwitch', (serialNumber, callback) => {
@@ -149,14 +150,14 @@ io.on('connection', (socket) => {
   })
 
   //allows client to change serial number associated to a region
-  socket.on('setSvg', (data, callback) => {
+  socket.on('setSvg', (data, callback = ()=>{}) => {
     console.log('setting svg')
-    fs.readFile('./svg.json', (err,data)=>{
-      var parsed = JSON.parse(data)
+    fs.readFile('./svg.json', (err,fileData)=>{
+      var parsed = JSON.parse(fileData)
       parsed.flatMap(r=>r.regions).find(r=>r.d == data.d).sn = data.sn
       fs.writeFile('./svg.json', JSON.stringify(parsed,null, 2), (err)=>{
         if(err) console.log(err)
-        callback(data)
+        getSwitch(data.sn, callback)
       })
     })
   })

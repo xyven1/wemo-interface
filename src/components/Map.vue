@@ -38,10 +38,10 @@
       </v-col>
     </v-row>
   </div>
-  <Dialog ref="addDialog" :agreeCondition="selectedSwitch!=null" agreeText="Continue" title="Choose Switch To Associate" :maxWidth="500" @cancel="selectedSwitch = null" @agree="associateSwitch(selectedSwitch); selectedSwitch = null; ">
+  <Dialog ref="addDialog" :agreeCondition="selectedSwitch!=null" :onShow="() => {$socket.emit('getSwitches', res => switchesForAssociation = res)}" agreeText="Continue" title="Choose Switch To Associate" :maxWidth="500" @cancel="selectedSwitch = null" @agree="associateSwitch(selectedSwitch).then(()=> selectedSwitch = null)">
     <template v-slot:body>
       <div class="text-center ma-2">
-        <v-btn class="ma-1" :color="selectedSwitch == sw ? 'primary' : ''" variant="outlined" v-for="sw in [].filter(sw=>!svg.flatMap(screen=>screen.regions).find(screen=>screen.sn == sw.serialNumber))" :key="sw" @click="selectedSwitch = sw">
+        <v-btn class="ma-1" :color="selectedSwitch == sw ? 'primary' : ''" variant="outlined" v-for="sw in switchesForAssociation.filter(sw=>!svg.flatMap(screen=>screen.regions).find(screen=>screen.sn == sw.serialNumber))" :key="sw" @click="selectedSwitch = sw">
           {{sw.name}}
         </v-btn>
       </div>
@@ -70,6 +70,7 @@ export default {
       screen: 1,
       selectedSwitch: null,
       timeOut: null,
+      switchesForAssociation: [],
     }
   },
   async mounted(){
@@ -126,7 +127,10 @@ export default {
       vm.event.on('selection', (region)=>{
         region.sw = sw
         region.sn = sw.serialNumber
-        vm.$socket.emit('setSvg', region)
+        vm.$socket.emit('setSvg', region, res => {
+          console.log(res)
+          region.sw.state = res.state
+        })
       })
       await once(vm.event, 'selection')
       vm.event.removeAllListeners('selection')
