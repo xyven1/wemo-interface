@@ -8,6 +8,7 @@ import Wemo from 'wemo-client'
 import { Server } from "socket.io"
 import debounce from "debounce"
 import axios from 'axios'
+import manageTV from './manageTV.js'
 
 const app = express()
 const server = http.createServer(app)
@@ -178,3 +179,5 @@ server.listen(process.env.SERVER_PORT, () => {
 
 //repeated discover run every 10 seconds
 setInterval(discover, 10000)
+
+manageTV()

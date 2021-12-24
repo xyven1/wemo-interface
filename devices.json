@@ -154,5 +154,11 @@
     "serialNumber": "M1CAA129N012DB",
     "ip": "10.200.10.168",
     "port": "49153"
+  },
+  {
+    "name": "Wemo Light Switch",
+    "serialNumber": "M16BA129N0081E",
+    "ip": "10.200.10.211",
+    "port": "49153"
   }
 ]
