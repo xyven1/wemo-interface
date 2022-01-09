@@ -47,7 +47,7 @@ const sync = debounce(()=>{
       if(sw) sw = device
       else parsed.push(device)
     }
-    fs.writeFile('./devices.json', JSON.stringify(parsed,null, 2), (err)=>{if(err) console.log(err)})
+    fs.writeFile('./devices.json', JSON.stringify(parsed,null, 2), (err)=>{if(err) console.error(err)})
   })
 }, 1000)
 
@@ -57,7 +57,7 @@ function manageClient(deviceInfo){
   devices[client.device.serialNumber] = client
 
   client.on('error', err => {
-    console.log('Error: %s', err.code)
+    console.error('Client error: %s', err.code)
   })
 
   client.on('binaryState', value =>{
@@ -68,10 +68,9 @@ function manageClient(deviceInfo){
 
 //discovers wemo devices connected to network
 function discover() {
-  console.log("searching...")
   wemo.discover((err, deviceInfo) => {
     if(err) 
-      return console.log("Error in discovery:", err)
+      return console.error("Error in discovery:", err)
     console.log('Wemo Device Found: %j', deviceInfo.friendlyName)
     manageClient(deviceInfo)
     sync()
@@ -85,7 +84,7 @@ function loadDevices(){
     parsed.forEach(sw => {
       wemo.load(`http://${sw.ip}:${sw.port}/setup.xml`, (err, deviceInfo)=>{
         if(err) 
-          return console.log("Failed to Load:", err)
+          return console.error("Failed to Load:", err)
         console.log('Loaded Device: %j', deviceInfo.friendlyName)
         manageClient(deviceInfo)
       })  
@@ -157,7 +156,7 @@ io.on('connection', (socket) => {
       var parsed = JSON.parse(fileData)
       parsed.flatMap(r=>r.regions).find(r=>r.d == data.d).sn = data.sn
       fs.writeFile('./svg.json', JSON.stringify(parsed,null, 2), (err)=>{
-        if(err) console.log(err)
+        if(err) console.error(err)
         getSwitch(data.sn, callback)
       })
     })
@@ -180,4 +179,4 @@ server.listen(process.env.SERVER_PORT, () => {
 //repeated discover run every 10 seconds
 setInterval(discover, 10000)
 
-manageTV()
+manageTV.start()
